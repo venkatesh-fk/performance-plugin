@@ -129,6 +129,8 @@ public abstract class AbstractReport {
 
     public abstract long get90LineDiff();
 
+    public abstract Double getThroughput();
+
     public abstract double getErrorPercentDiff();
 
     public abstract String getLastBuildHttpCodeIfChanged();

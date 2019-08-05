@@ -107,7 +107,7 @@
             </tr>
             <tr>
               <td width="25%">
-                <label>${%Compare based on}</label>
+                <label>${%Compare based on }</label>
               </td>
               <td colspan="2">
                 <table>
@@ -117,6 +117,7 @@
                         <option value="ART">Average Response Time</option>
                         <option value="MRT">Median Response Time</option>
                         <option value="PRT">90% ResponseTime</option>
+                        <option value="TRP">90% ResponseTime</option>
                       </f:select>
                     </f:entry>
                   </tr>

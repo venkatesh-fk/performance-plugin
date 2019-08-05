@@ -31,6 +31,8 @@ public class PerformanceReport extends AbstractReport implements Serializable,
         Comparable<PerformanceReport> {
     private static final long serialVersionUID = 675698410989941826L;
 
+    private static final long MILLISECONDS_IN_MINUTES = 60000;
+    private static final long MILLISECONDS_IN_SECONDS = 1000;
 
     public static final String INCLUDE_ALL = null;
 
@@ -94,7 +96,7 @@ public class PerformanceReport extends AbstractReport implements Serializable,
     private Long perc90;
     private Long perc100;
 
-    private Long throughput;
+    private Double throughput;
     protected String percentiles;
     protected int baselineBuild = 0;
 
@@ -125,7 +127,7 @@ public class PerformanceReport extends AbstractReport implements Serializable,
 
         if (throughput == null) {
             for (UriReport uriReport : getUriListOrdered()) {
-                Long uriThroughput = uriReport.getThroughput();
+                Double uriThroughput = uriReport.getThroughput();
                 if (uriThroughput != null) {
                     throughput = (throughput == null) ? uriThroughput : (uriThroughput + throughput);
                 }
@@ -453,6 +455,18 @@ public class PerformanceReport extends AbstractReport implements Serializable,
         return getAverage() - lastBuildReport.getAverage();
     }
 
+
+    public double getThroughputDiff() {
+        if(lastBuildReport == null) {
+            return 0;
+        }
+        return Math.round((getThroughput() - lastBuildReport.getThroughput()) * 1000.0) / 1000.0;
+    }
+
+    public double getThroughputTruncated(){
+        return Math.round(getThroughput() * 1000.0) / 1000.0;
+    }
+
     public long getMedianDiff() {
         if (lastBuildReport == null) {
             return 0;
@@ -547,8 +561,36 @@ public class PerformanceReport extends AbstractReport implements Serializable,
         return summarizerErrorPercent;
     }
 
-    public Long getThroughput() {
-        return throughput;
+    @Override
+    public Double getThroughput() {
+        if (throughput != null) {
+            return throughput;
+        } else {
+            final List<UriReport> uriReports = getUriListOrdered();
+            if (uriReports.isEmpty()) {
+                return 0d;
+            }
+            long sumSamplesCount = 0;
+            long startTime = Long.MAX_VALUE;
+            long endTime = 0;
+            for (UriReport uriReport : uriReports) {
+                sumSamplesCount += uriReport.samplesCount();
+                if (startTime > uriReport.getStart().getTime()) {
+                    startTime = uriReport.getStart().getTime();
+                }
+                if (endTime < uriReport.getEnd().getTime()) {
+                    endTime = uriReport.getEnd().getTime();
+                }
+            }
+
+            final long duration = endTime - startTime;
+
+            if (duration == 0) {
+                return (double) sumSamplesCount; // more than zero requests should always take at least some time. If that didn't get logged, this is the most suitable alternative.
+            }
+            throughput = (sumSamplesCount / ((double) duration / MILLISECONDS_IN_SECONDS));
+            return throughput;
+        }
     }
 
     public int getBaselineBuild() {

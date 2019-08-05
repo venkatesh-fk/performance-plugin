@@ -831,6 +831,8 @@ public class PerformanceProjectAction implements Action {
                         Messages.ProjectAction_TotalTrafficKB(), label);
                 dataSet.add(report.getAverageSizeInKb(),
                         Messages.ProjectAction_AverageKB(), label);
+                dataSet.add(report.getThroughput(),
+                        Messages.ProjectAction_Throughput(), label);
             }
             nbBuildsToAnalyze--;
         }

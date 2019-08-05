@@ -129,6 +129,8 @@ public abstract class AbstractConstraint implements Describable<AbstractConstrai
                 return (double) ur.getMin();
             case MAXIMUM:
                 return (double) ur.getMax();
+            case THROUGHPUT:
+                return (double) ur.getThroughput();
             default:
                 return (double) ur.getAverage();
         }
@@ -155,6 +157,8 @@ public abstract class AbstractConstraint implements Describable<AbstractConstrai
                 return (double) pr.getMin();
             case MAXIMUM:
                 return (double) pr.getMax();
+            case THROUGHPUT:
+                return (double) pr.getThroughput();
             default:
                 return (double) pr.getAverage();
         }
@@ -215,7 +219,7 @@ public abstract class AbstractConstraint implements Describable<AbstractConstrai
     }
 
     public enum Metric {
-        AVERAGE("Average", false), MEDIAN("Median", false), LINE90("90% Line", false), MAXIMUM("Maximum", false), MINIMUM("Minimum", false), ERRORPRC("Error %", false);
+        AVERAGE("Average", false), MEDIAN("Median", false), LINE90("90% Line", false), MAXIMUM("Maximum", false), MINIMUM("Minimum", false), ERRORPRC("Error %", false), THROUGHPUT("Throughput", false);
 
         private final String text;
         private boolean isSelected;

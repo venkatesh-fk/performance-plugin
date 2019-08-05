@@ -31,6 +31,8 @@ public abstract class ReportValueSelector {
             return new SelectMedian();
         if (graphType.equals(PerformancePublisher.PRT))
             return new SelectPercentile();
+        if (graphType.equals(PerformancePublisher.TRP))
+            return new SelectThroughput();
         return new SelectAverage(); // default
     }
 
@@ -70,6 +72,19 @@ public abstract class ReportValueSelector {
         @Override
         public String getGraphType() {
             return PerformancePublisher.PRT;
+        }
+    }
+
+    private static class SelectThroughput extends ReportValueSelector {
+
+        @Override
+        public long getValue(AbstractReport report) {
+            return Math.round(report.getThroughput());
+        }
+
+        @Override
+        public String getGraphType() {
+            return PerformancePublisher.TRP;
         }
     }
 }

@@ -39,6 +39,9 @@ public class UriReport extends AbstractReport implements Serializable, ModelObje
 
     private static final long serialVersionUID = -5269155428479638524L;
 
+    private static final double MILLISECONDS_IN_MINUTES = 60000;
+    private static final double MILLISECONDS_IN_SECONDS = 1000;
+
     public final static String END_PERFORMANCE_PARAMETER = ".endperformanceparameter";
 
     /**
@@ -117,8 +120,8 @@ public class UriReport extends AbstractReport implements Serializable, ModelObje
     private Long perc50;
     private Long perc90;
     private Long perc100;
-    @Deprecated
-    private Long throughput;
+
+    private Double throughput;
 
     private int samplesCount;
     protected String percentiles;
@@ -178,6 +181,7 @@ public class UriReport extends AbstractReport implements Serializable, ModelObje
         perc50 = (long) report.getPerc50();
         perc90 = (long) report.getPerc90();
         perc100 = (long) report.getPerc100();
+        throughput = report.getThroughput();
 
         this.percentilesValues.put(0.0, (long) report.getPerc0());
         this.percentilesValues.put(50.0, (long) report.getPerc50());
@@ -394,6 +398,17 @@ public class UriReport extends AbstractReport implements Serializable, ModelObje
         return getAverage() - lastBuildUriReport.getAverage();
     }
 
+    public double getThroughputDiff() {
+        if(lastBuildUriReport == null) {
+            return 0;
+        }
+        return Math.round((getThroughput() - lastBuildUriReport.getThroughput()) * 1000.0) / 1000.0;
+    }
+
+    public double getThroughputTruncated(){
+        return Math.round(getThroughput() * 1000.0) / 1000.0;
+    }
+
     public long getMedianDiff() {
         if (lastBuildUriReport == null) {
             return 0;
@@ -533,12 +548,21 @@ public class UriReport extends AbstractReport implements Serializable, ModelObje
     }
 
     @Deprecated
-    public void setThroughput(Long throughput) {
+    public void setThroughput(double throughput) {
         this.throughput = throughput;
     }
 
-    @Deprecated
-    public Long getThroughput() {
+    public Double getThroughput() {
+        if (throughput != null){
+            return throughput;
+        }
+        long startTime = getStart().getTime();
+        long endTime = getEnd().getTime();
+        long duration = endTime - startTime;
+        if (duration == 0) {
+            return (double) samplesCount(); // more than zero requests should always take at least some time. If that didn't get logged, this is the most suitable alternative.
+        }
+        throughput = samplesCount() / ((double) duration / MILLISECONDS_IN_SECONDS);
         return throughput;
     }
 

@@ -22,7 +22,7 @@ public class TaurusFinalStats implements Serializable {
 
     private Double testDuration;
 
-    private long throughput;
+    private double throughput;
 
 
     public String getLabel() {
@@ -97,7 +97,7 @@ public class TaurusFinalStats implements Serializable {
         this.perc100 = perc100;
     }
 
-    public long getThroughput() {
+    public double getThroughput() {
         return throughput;
     }
 

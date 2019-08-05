@@ -387,6 +387,8 @@ public class PerformanceReportMap implements ModelObject {
             return Messages.ProjectAction_Median();
         if (configType.equals(PerformancePublisher.PRT))
             return Messages.ProjectAction_Line90();
+        if (configType.equals(PerformancePublisher.TRP))
+            return Messages.ProjectAction_Throughput();
         return Messages.ProjectAction_Average();
     }
 

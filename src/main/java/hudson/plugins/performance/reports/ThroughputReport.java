@@ -16,7 +16,7 @@ public class ThroughputReport {
     }
 
     public double get() {
-        Long throughput = performanceReport.getThroughput();
+        Double throughput = performanceReport.getThroughput();
         if (throughput != null) {
             return throughput;
         } else {

@@ -318,6 +318,6 @@ public class PerformanceReportTest {
         stats.setTestDuration(10d);
 
         report.addSample(stats, true);
-        assertEquals(10, report.getThroughput().longValue());
+        assertEquals(10, report.getThroughput().doubleValue());
     }
 }

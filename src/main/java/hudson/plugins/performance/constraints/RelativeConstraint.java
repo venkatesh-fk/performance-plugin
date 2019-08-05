@@ -322,6 +322,10 @@ public class RelativeConstraint extends AbstractConstraint {
             }
         }
 
+        if (calculatedValue == Double.POSITIVE_INFINITY || calculatedValue == Double.NEGATIVE_INFINITY) {
+            result =  (getOperator() == Operator.NOT_LESS) ? 0 : Double.POSITIVE_INFINITY;
+        }
+
         switch (getOperator()) {
             case NOT_LESS:
                 setSuccess(result < newValue);
@@ -364,18 +368,18 @@ public class RelativeConstraint extends AbstractConstraint {
      * @param builds all builds that are saved in Jenkins
      * @return average of measured metric over included builds
      */
-    private long calcAveOfReports(List<? extends Run<?, ?>> builds) {
+    private double calcAveOfReports(List<? extends Run<?, ?>> builds) {
         List<Run<?, ?>> buildsToAnalyze;
-        long tmpResult = 0;
+        double tmpResult = 0;
         int counter = 0;
-        long result = 0;
+        double result = 0;
         Run<?, ?> newBuild = builds.get(0);
         if (!getPreviousResultsBlock().isChoicePreviousResults()) {
             buildsToAnalyze = evaluateDate(builds);
         } else {
             buildsToAnalyze = evaluatePreviousBuilds(builds);
         }
-        setPreviousResults(buildsToAnalyze.size());
+//        setPreviousResults(buildsToAnalyze.size());
         if (!buildsToAnalyze.isEmpty()) {
             for (Run<?, ?> actBuild : buildsToAnalyze) {
                 if (actBuild.getAction(PerformanceBuildAction.class) != null && !actBuild.equals(newBuild)) {
@@ -396,7 +400,7 @@ public class RelativeConstraint extends AbstractConstraint {
                     setPreviousResults(getPreviousResults() - 1);
                 }
             }
-            result = (long)SafeMaths.safeDivide(tmpResult, counter);
+            result = SafeMaths.safeDivide(tmpResult, counter);
         } else {
 			/*
 			 * If no build was found to analyze return Long.MIN_VALUE. This will cause the
@@ -461,7 +465,7 @@ public class RelativeConstraint extends AbstractConstraint {
         int i = 1;
         int j = 0;
         while (j < getPreviousResults() && i < builds.size()) {
-            if (builds.get(i).getResult().equals(Result.SUCCESS) 
+            if (builds.get(i).getResult().equals(Result.SUCCESS)
                     || (builds.get(i).getResult().equals(Result.UNSTABLE) 
                     && !getSettings().isIgnoreUnstableBuilds())
                     || (builds.get(i).getResult().equals(Result.FAILURE) && !getSettings().isIgnoreFailedBuilds())) {

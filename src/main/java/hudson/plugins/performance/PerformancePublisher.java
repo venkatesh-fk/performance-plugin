@@ -115,6 +115,8 @@ public class PerformancePublisher extends Recorder implements SimpleBuildStep {
 
     public static final String PRT = "PRT";
 
+    public static final String TRP = "TRP";
+
     public String optionType = "ART";
 
     private static final String ARCHIVE_DIRECTORY = "archive";
@@ -723,6 +725,7 @@ public class PerformancePublisher extends Recorder implements SimpleBuildStep {
             StringBuilder averageBuffer = null;
             StringBuilder medianBuffer = null;
             StringBuilder percentileBuffer = null;
+            StringBuilder throughputBuffer = null;
 
             // getting previous build/nth previous build..
             Run<?, ?> buildForComparison = compareBuildPrevious ? run.getPreviousSuccessfulBuild() : getnthBuild(run);
@@ -746,6 +749,7 @@ public class PerformancePublisher extends Recorder implements SimpleBuildStep {
                         (averageBuffer = new StringBuilder("<average>\n")),
                         (medianBuffer = new StringBuilder("<median>\n")),
                         (percentileBuffer = new StringBuilder("<percentile>\n")),
+                        (throughputBuffer = new StringBuilder("<throughput>\n")),
                         "%1$-"+maxUriColumnWidth+"s%2$20d%3$20d%4$20.0f%5$19.2f%%"
                 );
 
@@ -753,9 +757,10 @@ public class PerformancePublisher extends Recorder implements SimpleBuildStep {
                 averageBuffer.append("</average>\n");
                 medianBuffer.append("</median>\n");
                 percentileBuffer.append("</percentile>");
+                throughputBuffer.append("</throughput>");
             }
 
-            writeRelativeThresholdReportInXML(run, averageBuffer, medianBuffer, percentileBuffer);
+            writeRelativeThresholdReportInXML(run, averageBuffer, medianBuffer, percentileBuffer, throughputBuffer);
 
 
         } catch (Exception e) {
@@ -769,7 +774,7 @@ public class PerformancePublisher extends Recorder implements SimpleBuildStep {
     // Comparing both builds based on either average, median or 90
     // percentile response time...
     private void compareUriReports(Run<?, ?> run, List<UriReport> currentUriReports, List<UriReport> reportsForComparison, PrintStream logger,
-                                   StringBuilder averageBuffer, StringBuilder medianBuffer, StringBuilder percentileBuffer, String logFormat) {
+                                   StringBuilder averageBuffer, StringBuilder medianBuffer, StringBuilder percentileBuffer, StringBuilder throughputBuffer, String logFormat) {
 
         // comparing the labels and calculating the differences...
         for (UriReport reportForComparison : reportsForComparison) {
@@ -779,6 +784,7 @@ public class PerformancePublisher extends Recorder implements SimpleBuildStep {
                     appendRelativeInfoAboutAverage(currentUriReport, reportForComparison, averageBuffer);
                     appendRelativeInfoAboutMedian(currentUriReport, reportForComparison, medianBuffer);
                     appendRelativeInfoAbout90Line(currentUriReport, reportForComparison, percentileBuffer);
+                    appendRelativeInfoAboutThroughput(currentUriReport, reportForComparison, throughputBuffer);
 
                     calculateBuildStatus(run, logger, reportForComparison.getStaplerUri(),
                             calculateRelativeDiffInPercent(currentUriReport, reportForComparison, logger, logFormat));
@@ -868,11 +874,18 @@ public class PerformancePublisher extends Recorder implements SimpleBuildStep {
                 reportForComparison.get90Line(), currentReport.get90Line(),
                 relativeDiff, relativeDiffPercent));
         }
+        else if(configType.equalsIgnoreCase("TRP")){
+            relativeDiff = (double) currentReport.getThroughput() - reportForComparison.getThroughput();
+            relativeDiffPercent = calculateDiffInPercents(relativeDiff, reportForComparison.getThroughput());
+            logger.println(String.format(logFormat, reportForComparison.getStaplerUri(),
+                    reportForComparison.getThroughput(), currentReport.getThroughput(),
+                    relativeDiff, relativeDiffPercent));
+        }
         return relativeDiffPercent;
     }
 
     private void writeRelativeThresholdReportInXML(Run<?, ?> run, StringBuilder averageBuffer,
-                                                   StringBuilder medianBuffer, StringBuilder percentileBuffer) throws IOException {
+                                                   StringBuilder medianBuffer, StringBuilder percentileBuffer, StringBuilder throughputBuffer) throws IOException {
         File xmlDirectory = createArchiveDirectoryIfMissing(run);
 
         File xmlfile = new File(xmlDirectory, "dashBoard_results.xml");
@@ -910,6 +923,10 @@ public class PerformancePublisher extends Recorder implements SimpleBuildStep {
 
             if (percentileBuffer != null) {
                 bw.write(percentileBuffer.toString());
+            }
+
+            if (percentileBuffer != null) {
+                bw.write(throughputBuffer.toString());
             }
 
             bw.write("</results>");
@@ -959,6 +976,18 @@ public class PerformancePublisher extends Recorder implements SimpleBuildStep {
         percentileBuffer.append("\t\t<relativeDiff>").append(relativeDiff).append("</relativeDiff>\n");
         percentileBuffer.append("\t\t<relativeDiffPercent>").append(relativeDiffPercent).append("</relativeDiffPercent>\n");
         percentileBuffer.append("\t</").append(currentReport.getStaplerUri()).append(">\n");
+    }
+
+    private void appendRelativeInfoAboutThroughput(UriReport currentReport, UriReport reportForComparison, StringBuilder throughputBuffer){
+        double relativeDiff = (double) currentReport.getThroughput() - reportForComparison.getThroughput();
+        double relativeDiffPercent = calculateDiffInPercents(relativeDiff, reportForComparison.getThroughput());
+
+        throughputBuffer.append("\t<").append(currentReport.getStaplerUri()).append(">\n");
+        throughputBuffer.append("\t\t<previousBuildAvg>").append(reportForComparison.getAverage()).append("</previousBuildAvg>\n");
+        throughputBuffer.append("\t\t<currentBuildAvg>").append(currentReport.getAverage()).append("</currentBuildAvg>\n");
+        throughputBuffer.append("\t\t<relativeDiff>").append(relativeDiff).append("</relativeDiff>\n");
+        throughputBuffer.append("\t\t<relativeDiffPercent>").append(relativeDiffPercent).append("</relativeDiffPercent>\n");
+        throughputBuffer.append("\t</").append(currentReport.getStaplerUri()).append(">\n");
     }
 
     // Print information about Unstable & Failed Threshold
@@ -1015,6 +1044,11 @@ public class PerformancePublisher extends Recorder implements SimpleBuildStep {
             logger.println("90 Percentile response time\n\n");
             logger.println(String.format(logFormat,
                 "URI", "PrevBuildURI90%", "CurrentBuildURI90%", "RelativeDiff", "RelativeDiff(%)"));
+        }
+        else if(configType.equalsIgnoreCase("TRP")) {
+            logger.println("Throughput");
+            logger.println(String.format(logFormat,
+                    "URI", "PrevBuildURIThroughPut", "CurrentBuildURIThroughPut", "RelativeDiff", "RelativeDiff(%)"));
         }
     }
 
@@ -1138,6 +1172,10 @@ public class PerformancePublisher extends Recorder implements SimpleBuildStep {
 
     public boolean isPRT() {
         return configType.compareToIgnoreCase(PerformancePublisher.PRT) == 0;
+    }
+
+    public boolean isTRP() {
+        return configType.compareToIgnoreCase(PerformancePublisher.TRP) == 0;
     }
 
     public static File[] getPerformanceReportDirectory(Run<?, ?> build, String parserDisplayName,
@@ -1507,6 +1545,7 @@ public class PerformancePublisher extends Recorder implements SimpleBuildStep {
             items.add("Average Response Time", "ART");
             items.add("Median Response Time", "MRT");
             items.add("Percentile Response Time", "PRT");
+            items.add("Throughput", "TRP");
             return items;
         }
     }

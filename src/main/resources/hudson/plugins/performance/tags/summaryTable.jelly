@@ -35,6 +35,13 @@
     </td>
 
     <td>
+        ${it.getThroughputTruncated()}
+        <sup class="${h.ifThenElse(it.getThroughputDiff()>=0,'green','red')}">
+            ${h.ifThenElse(it.getThroughputDiff()>=0,'+','')}${it.getThroughputDiff()}
+        </sup>
+    </td>
+
+    <td>
         ${it.errorPercent()} %
         <sup class="${h.ifThenElse(it.getErrorPercentDiff()>0,'red','green')}">
             ${h.ifThenElse(it.getErrorPercentDiff()>0,'+','')}${it.getErrorPercentDiff()} %
